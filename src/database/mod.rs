@@ -2,6 +2,8 @@ use sqlx::{Connection, postgres::PgPoolOptions};
 use anyhow::Result;
 use std::time::Duration;
 
+mod likes;
+
 pub struct SocialDb {
     pool: sqlx::PgPool,
 }
@@ -22,6 +24,11 @@ impl SocialDb {
             .idle_timeout(Duration::from_secs(10))
             .connect(&db_url)
             .await?;
+
+        sqlx::migrate!("./migrations")
+            .run(&pool)
+            .await?;
+
         return Ok(SocialDb {
             pool,
         })
