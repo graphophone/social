@@ -1,4 +1,7 @@
 services:
+  postgres:
+    ports:
+      - "54321:5432"
   pg-admin:
     image: dpage/pgadmin4:9.15
     ports:

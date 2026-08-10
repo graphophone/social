@@ -2,7 +2,7 @@ use sqlx::{Connection, postgres::PgPoolOptions};
 use anyhow::Result;
 use std::time::Duration;
 
-mod likes;
+pub mod likes;
 
 pub struct SocialDb {
     pool: sqlx::PgPool,
