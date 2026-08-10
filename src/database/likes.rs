@@ -80,10 +80,12 @@ use super::database::SocialDb;
         let db = SocialDb {
             pool,
         };
-        db.like_track(1, 1).await?;
-        db.like_track(2, 1).await?;
-        db.like_track(3, 1).await?;
-        db.like_track(4, 1).await?;
+        tokio::try_join!(
+            db.like_track(1, 1),
+            db.like_track(2, 1),
+            db.like_track(3, 1),
+            db.like_track(4, 1),
+        )?;
         let count = db.get_likes_count_for_track(1).await?;
         assert_eq!(count, 4);
         Ok(())
@@ -94,12 +96,14 @@ use super::database::SocialDb;
         let db = SocialDb {
             pool,
         };
-        db.like_track(1, 1).await?;
-        db.like_track(2, 1).await?;
-        db.like_track(3, 1).await?;
-        db.like_track(4, 1).await?;
-        db.dislike_track(1, 1).await?;
-        db.dislike_track(5, 1).await?;
+        tokio::try_join!(
+            db.like_track(1, 1),
+            db.like_track(2, 1),
+            db.like_track(3, 1),
+            db.like_track(4, 1),
+            db.dislike_track(1, 1),
+            db.dislike_track(5, 1),
+        )?;
         let count = db.get_likes_count_for_track(1).await?;
         assert_eq!(count, 3);
         Ok(())
