@@ -1,0 +1,6 @@
+database:
+  host: postgres
+  port: 5432
+  username: user
+  password: my-postgres-pass
+  database: social-db
