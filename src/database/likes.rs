@@ -3,7 +3,7 @@ use crate::database;
 pub trait LikesDb {
     async fn like_track(&self, user_id: i64, track_id: i64) -> Result<(), sqlx::Error>;
     async fn dislike_track(&self, user_id: i64, track_id: i64) -> Result<(), sqlx::Error>;
-    async fn get_liked_tracks_for_user(&self, user_id: i64, page_number: i16, page_size: i16) -> Result<Vec<i64>, sqlx::Error>;
+    async fn get_liked_tracks_for_user(&self, user_id: i64, page_number: i32, page_size: i32) -> Result<Vec<i64>, sqlx::Error>;
     async fn get_likes_count_for_track(&self, track_id: i64) -> Result<i64, sqlx::Error>;
 }
 
@@ -25,8 +25,8 @@ impl LikesDb for database::SocialDb {
         Ok(())
     }
 
-    async fn get_liked_tracks_for_user(&self, user_id: i64, page_number: i16, page_size: i16) -> Result<Vec<i64>, sqlx::Error> {
-        let offset = (page_number - 1) * page_size;
+    async fn get_liked_tracks_for_user(&self, user_id: i64, page_number: i32, page_size: i32) -> Result<Vec<i64>, sqlx::Error> {
+        let offset: i32 = (page_number - 1) * page_size;
         let tracks_ids = sqlx::query_scalar!(r"
             SELECT track_id FROM likes
             WHERE user_id = $1
