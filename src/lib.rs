@@ -1,7 +1,9 @@
 pub mod config;
-mod database;
 use anyhow::Result;
 use tokio::time;
+
+mod database;
+mod services;
 
 pub async fn run(conf: config::Config) -> Result<()> {
     let db = database::SocialDb::build(&conf.database)
