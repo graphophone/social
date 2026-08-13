@@ -4,12 +4,18 @@ pub mod likes {
     tonic::include_proto!("likes");
 }
 
-use likes::{likes_server::{Likes}, Empty, LikeRequest, DislikeRequest, GetLikedTracksRequest, GetLikesCountRequest};
-
+use likes::{likes_server::Likes, Empty, LikeRequest, DislikeRequest, GetLikedTracksRequest, GetLikesCountRequest};
+pub use likes::likes_server::LikesServer;
 use crate::{database::{SocialDb, likes::LikesDb}, services::likes::likes::{LikedTracksResponse, LikesCountResponse}};
 
 pub struct LikesService {
     likes_db: SocialDb,
+}
+
+impl LikesService {
+    pub fn new(likes_db: SocialDb) -> LikesService {
+        LikesService { likes_db }
+    }
 }
 
 #[tonic::async_trait]
