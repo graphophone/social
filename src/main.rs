@@ -1,6 +1,6 @@
 #[tokio::main]
 async fn main() {
-    let conf = social::config::Config::build("config/config.local.yaml")
+    let conf: social::config::Config = social::config::Config::build("config/config.local.yaml")
         .expect("failed to read config");
     social::run(conf)
         .await
