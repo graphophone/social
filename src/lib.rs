@@ -17,7 +17,7 @@ pub async fn run(conf: config::Config) -> Result<()> {
         .expect("failed to ping database");
     let likes_service = LikesService::new(db);
 
-    println!("starting social service: {}", addr);
+    println!("starting social service");
     Server::builder()
         .add_service(LikesServer::new(likes_service))
         .serve(addr)
