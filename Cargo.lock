@@ -1285,7 +1285,6 @@ name = "social"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "dotenvy",
  "prost",
  "serde",
  "serde_yaml",
