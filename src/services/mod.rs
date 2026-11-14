@@ -1,1 +1,1 @@
-pub mod followers;
+pub mod follows;
