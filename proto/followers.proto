@@ -1,0 +1,23 @@
+syntax = "proto3";
+package followers;
+
+service Followers {
+    rpc GetUserFollowsCount(UserId) returns (FollowsCount);
+    rpc ToggleFollow(ToggleFollowReq) returns (Empty);
+}
+
+message Empty {}
+
+message UserId {
+    int64 user_id = 1;
+}
+
+message FollowsCount {
+    int64 following_count = 1;
+    int64 followed_count = 2;
+}
+
+message ToggleFollowReq {
+    int64 followee_id = 1;
+    int64 follower_id = 2;
+}

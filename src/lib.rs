@@ -1,8 +1,10 @@
 pub mod config;
+use std::sync::Arc;
+
 use anyhow::Result;
 use tonic::transport::Server;
 
-use crate::services::likes::{LikesServer, LikesService};
+use crate::services::followers::{FollowersService, followers::followers_server::FollowersServer};
 
 mod database;
 mod services;
@@ -10,16 +12,13 @@ mod services;
 pub async fn run(conf: config::Config) -> Result<()> {
     let addr = "0.0.0.0:8080".parse()?;
 
-    let db = database::SocialDb::build(&conf.database)
-        .await?;
-    db.ping()
-        .await
-        .expect("failed to ping database");
-    let likes_service = LikesService::new(db);
+    let social_db = Arc::new(database::SocialDb::build(&conf.database).await?);
+
+    let followers_service = FollowersService::new(Arc::clone(&social_db));
 
     println!("starting social service");
     Server::builder()
-        .add_service(LikesServer::new(likes_service))
+        .add_service(FollowersServer::new(followers_service))
         .serve(addr)
         .await?;
 

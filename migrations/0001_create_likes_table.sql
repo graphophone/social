@@ -1,6 +1,14 @@
-CREATE TABLE IF NOT EXISTS post_likes (
-    user_id BIGINT NOT NULL,
-    post_id BIGINT NOT NULL,
+CREATE TABLE IF NOT EXISTS followers (
+    followee_id BIGINT NOT NULL,
+    follower_id BIGINT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    UNIQUE (user_id, post_id)
+    UNIQUE (followee_id, follower_id)
+);
+
+CREATE TABLE IF NOT EXISTS comments (
+    comment_id BIGINT NOT NULL,
+    commenter_id BIGINT NOT NULL,
+    music_id BIGINT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );

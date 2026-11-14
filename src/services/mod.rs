@@ -1,1 +1,1 @@
-pub mod likes;
+pub mod followers;

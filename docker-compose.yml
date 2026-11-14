@@ -3,9 +3,9 @@ services:
     image: postgres:18-alpine
     container_name: postgres
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: my-postgres-pass
-      POSTGRES_DB: social-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: social_db
     healthcheck:
       interval: 10s
       retries: 3

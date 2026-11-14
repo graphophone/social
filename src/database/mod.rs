@@ -1,8 +1,8 @@
-use sqlx::{Connection, postgres::PgPoolOptions};
 use anyhow::Result;
+use sqlx::postgres::PgPoolOptions;
 use std::time::Duration;
 
-pub mod likes;
+pub mod followers;
 
 pub struct SocialDb {
     pool: sqlx::PgPool,
@@ -12,11 +12,7 @@ impl SocialDb {
     pub async fn build(conf: &crate::config::PostgresConfig) -> Result<Self> {
         let db_url = format!(
             "postgres://{}:{}@{}:{}/{}",
-            conf.username,
-            conf.password,
-            conf.host,
-            conf.port,
-            conf.database,
+            conf.username, conf.password, conf.host, conf.port, conf.database,
         );
         let pool = PgPoolOptions::new()
             .max_connections(50)
@@ -25,19 +21,8 @@ impl SocialDb {
             .connect(&db_url)
             .await?;
 
-        sqlx::migrate!("./migrations")
-            .run(&pool)
-            .await?;
+        sqlx::migrate!("./migrations").run(&pool).await?;
 
-        return Ok(SocialDb {
-            pool,
-        })
-    }
-
-    pub async fn ping(&self) -> Result<()> {
-        let mut conn = self.pool.acquire()
-            .await?;
-        conn.ping().await?;
-        Ok(())
+        return Ok(SocialDb { pool });
     }
 }
