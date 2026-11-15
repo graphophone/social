@@ -5,7 +5,8 @@ use tonic::{Request, Response, Status, async_trait};
 use crate::{
     database::{SocialDb, follows::FollowsDb},
     services::follows::follows::{
-        Empty, FollowsCount, FollowsPage, GetFollowsCountReq, GetFollowsReq, ToggleFollowReq,
+        Empty, FollowEntry, FollowsCount, FollowsPage, GetFollowsCountReq, GetFollowsReq,
+        ToggleFollowReq,
     },
 };
 
@@ -64,15 +65,25 @@ impl follows::follows_server::Follows for FollowsService {
     ) -> Result<Response<FollowsPage>, Status> {
         let req = req.into_inner();
 
-        let (total_pages, user_ids) = self
+        let (total_pages, follows) = self
             .social_db
-            .get_followers(req.user_id, req.page_number)
+            .get_followers(req.user_id, req.page_number, req.requestor_id)
             .await
             .map_err(|_| Status::internal("failed to get followers"))?;
 
         Ok(Response::new(FollowsPage {
             total_pages,
-            user_ids,
+            follows: follows
+                .into_iter()
+                .map(|v| FollowEntry {
+                    user_id: v.user_id,
+                    follows_count: Some(FollowsCount {
+                        followings_count: v.follows_count.followings_count,
+                        followers_count: v.follows_count.followers_count,
+                        is_followed: v.follows_count.is_followed,
+                    }),
+                })
+                .collect(),
         }))
     }
 
@@ -82,15 +93,25 @@ impl follows::follows_server::Follows for FollowsService {
     ) -> Result<Response<FollowsPage>, Status> {
         let req = req.into_inner();
 
-        let (total_pages, user_ids) = self
+        let (total_pages, follows) = self
             .social_db
-            .get_followings(req.user_id, req.page_number)
+            .get_followings(req.user_id, req.page_number, req.requestor_id)
             .await
-            .map_err(|_| Status::internal("failed to get followings"))?;
+            .map_err(|_| Status::internal("failed to get followers"))?;
 
         Ok(Response::new(FollowsPage {
             total_pages,
-            user_ids,
+            follows: follows
+                .into_iter()
+                .map(|v| FollowEntry {
+                    user_id: v.user_id,
+                    follows_count: Some(FollowsCount {
+                        followings_count: v.follows_count.followings_count,
+                        followers_count: v.follows_count.followers_count,
+                        is_followed: v.follows_count.is_followed,
+                    }),
+                })
+                .collect(),
         }))
     }
 }

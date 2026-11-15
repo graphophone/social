@@ -9,9 +9,18 @@ pub trait FollowsDb {
         follower_id: Option<i64>,
     ) -> sqlx::Result<FollowsCount>;
     async fn toggle_follow(&self, followee_id: i64, follower_id: i64) -> sqlx::Result<()>;
-    async fn get_followers(&self, user_id: i64, page_number: i64) -> sqlx::Result<(i64, Vec<i64>)>;
-    async fn get_followings(&self, user_id: i64, page_number: i64)
-    -> sqlx::Result<(i64, Vec<i64>)>;
+    async fn get_followers(
+        &self,
+        user_id: i64,
+        page_number: i64,
+        requestor_id: Option<i64>,
+    ) -> sqlx::Result<(i64, Vec<FollowEntry>)>;
+    async fn get_followings(
+        &self,
+        user_id: i64,
+        page_number: i64,
+        requestor_id: Option<i64>,
+    ) -> sqlx::Result<(i64, Vec<FollowEntry>)>;
 }
 
 impl FollowsDb for SocialDb {
@@ -64,21 +73,43 @@ impl FollowsDb for SocialDb {
         Ok(())
     }
 
-    async fn get_followers(&self, user_id: i64, page_number: i64) -> sqlx::Result<(i64, Vec<i64>)> {
+    async fn get_followers(
+        &self,
+        user_id: i64,
+        page_number: i64,
+        requestor_id: Option<i64>,
+    ) -> sqlx::Result<(i64, Vec<FollowEntry>)> {
         let mut tx = self.pool.begin().await?;
 
-        let user_ids = sqlx::query_scalar!(
+        let follows = sqlx::query!(
             r"
-            SELECT follower_id
-            FROM follows
-            WHERE followee_id = $1
-            ORDER BY created_at
+            SELECT F1.follower_id,
+                (SELECT COUNT(*) FROM follows WHERE follower_id = F1.follower_id) followings_count,
+                (SELECT COUNT(*) FROM follows WHERE followee_id = F1.follower_id) followers_count,
+                (SELECT EXISTS (
+                    SELECT 1 FROM follows
+                    WHERE follower_id = $3 AND followee_id = F1.follower_id)
+                ) is_followed
+            FROM follows F1
+            WHERE F1.followee_id = $1
+            ORDER BY F1.created_at
             LIMIT 32 OFFSET $2;",
             user_id,
-            (page_number - 1) * 32
+            (page_number - 1) * 32,
+            requestor_id,
         )
         .fetch_all(&mut *tx)
-        .await?;
+        .await?
+        .into_iter()
+        .map(|v| FollowEntry {
+            user_id: v.follower_id,
+            follows_count: FollowsCount {
+                followings_count: v.followings_count.unwrap_or(0),
+                followers_count: v.followers_count.unwrap_or(0),
+                is_followed: v.is_followed.unwrap_or(false),
+            },
+        })
+        .collect();
 
         let count = sqlx::query_scalar!(
             r"
@@ -93,28 +124,46 @@ impl FollowsDb for SocialDb {
 
         let count = (count.unwrap_or(0) as f64 / 32.0).ceil() as i64;
 
-        Ok((count, user_ids))
+        Ok((count, follows))
     }
 
     async fn get_followings(
         &self,
         user_id: i64,
         page_number: i64,
-    ) -> sqlx::Result<(i64, Vec<i64>)> {
+        requestor_id: Option<i64>,
+    ) -> sqlx::Result<(i64, Vec<FollowEntry>)> {
         let mut tx = self.pool.begin().await?;
 
-        let user_ids = sqlx::query_scalar!(
+        let follows = sqlx::query!(
             r"
-            SELECT followee_id
-            FROM follows
-            WHERE follower_id = $1
-            ORDER BY created_at
+            SELECT F1.followee_id,
+                (SELECT COUNT(*) FROM follows WHERE follower_id = F1.followee_id) followings_count,
+                (SELECT COUNT(*) FROM follows WHERE followee_id = F1.followee_id) followers_count,
+                (SELECT EXISTS (
+                    SELECT 1 FROM follows
+                    WHERE follower_id = $3 AND followee_id = F1.followee_id)
+                ) is_followed
+            FROM follows F1
+            WHERE F1.follower_id = $1
+            ORDER BY F1.created_at
             LIMIT 32 OFFSET $2;",
             user_id,
-            (page_number - 1) * 32
+            (page_number - 1) * 32,
+            requestor_id,
         )
         .fetch_all(&mut *tx)
-        .await?;
+        .await?
+        .into_iter()
+        .map(|v| FollowEntry {
+            user_id: v.followee_id,
+            follows_count: FollowsCount {
+                followings_count: v.followings_count.unwrap_or(0),
+                followers_count: v.followers_count.unwrap_or(0),
+                is_followed: v.is_followed.unwrap_or(false),
+            },
+        })
+        .collect();
 
         let count = sqlx::query_scalar!(
             r"
@@ -129,7 +178,7 @@ impl FollowsDb for SocialDb {
 
         let count = (count.unwrap_or(0) as f64 / 32.0).ceil() as i64;
 
-        Ok((count, user_ids))
+        Ok((count, follows))
     }
 }
 
@@ -138,4 +187,10 @@ pub struct FollowsCount {
     pub followings_count: i64,
     pub followers_count: i64,
     pub is_followed: bool,
+}
+
+#[derive(Deserialize)]
+pub struct FollowEntry {
+    pub user_id: i64,
+    pub follows_count: FollowsCount,
 }
