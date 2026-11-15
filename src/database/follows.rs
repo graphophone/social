@@ -13,13 +13,13 @@ pub trait FollowsDb {
         &self,
         user_id: i64,
         page_number: i64,
-        requestor_id: Option<i64>,
+        requester_id: Option<i64>,
     ) -> sqlx::Result<(i64, Vec<FollowEntry>)>;
     async fn get_followings(
         &self,
         user_id: i64,
         page_number: i64,
-        requestor_id: Option<i64>,
+        requester_id: Option<i64>,
     ) -> sqlx::Result<(i64, Vec<FollowEntry>)>;
 }
 
@@ -77,7 +77,7 @@ impl FollowsDb for SocialDb {
         &self,
         user_id: i64,
         page_number: i64,
-        requestor_id: Option<i64>,
+        requester_id: Option<i64>,
     ) -> sqlx::Result<(i64, Vec<FollowEntry>)> {
         let mut tx = self.pool.begin().await?;
 
@@ -96,7 +96,7 @@ impl FollowsDb for SocialDb {
             LIMIT 32 OFFSET $2;",
             user_id,
             (page_number - 1) * 32,
-            requestor_id,
+            requester_id,
         )
         .fetch_all(&mut *tx)
         .await?
@@ -131,7 +131,7 @@ impl FollowsDb for SocialDb {
         &self,
         user_id: i64,
         page_number: i64,
-        requestor_id: Option<i64>,
+        requester_id: Option<i64>,
     ) -> sqlx::Result<(i64, Vec<FollowEntry>)> {
         let mut tx = self.pool.begin().await?;
 
@@ -150,7 +150,7 @@ impl FollowsDb for SocialDb {
             LIMIT 32 OFFSET $2;",
             user_id,
             (page_number - 1) * 32,
-            requestor_id,
+            requester_id,
         )
         .fetch_all(&mut *tx)
         .await?

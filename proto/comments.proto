@@ -2,10 +2,10 @@ syntax = "proto3";
 package comments;
 
 service Comments {
-    rpc AddComment(AddCommentReq) returns (Empty);
+    rpc AddComment(AddCommentReq) returns (CommentEntry);
     rpc RemoveComment(RemoveCommentReq) returns (Empty);
     rpc UpdateComment(UpdateCommentReq) returns (Empty);
-    rpc CheckOwner(CheckOwnerReq) returns (CheckOwnerRes);
+    rpc CheckOwner(CheckOwnerReq) returns (Empty);
     rpc ToggleLike(ToggleLikeReq) returns (Empty);
     rpc GetComments(GetCommentsReq) returns (CommentsPage);
 }
@@ -30,10 +30,6 @@ message UpdateCommentReq {
 message CheckOwnerReq {
     int64 user_id = 1;
     int64 comment_id = 2;
-}
-
-message CheckOwnerRes {
-    bool is_owner = 1;
 }
 
 message ToggleLikeReq {

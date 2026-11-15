@@ -67,7 +67,7 @@ impl follows::follows_server::Follows for FollowsService {
 
         let (total_pages, follows) = self
             .social_db
-            .get_followers(req.user_id, req.page_number, req.requestor_id)
+            .get_followers(req.user_id, req.page_number, req.requester_id)
             .await
             .map_err(|_| Status::internal("failed to get followers"))?;
 
@@ -95,7 +95,7 @@ impl follows::follows_server::Follows for FollowsService {
 
         let (total_pages, follows) = self
             .social_db
-            .get_followings(req.user_id, req.page_number, req.requestor_id)
+            .get_followings(req.user_id, req.page_number, req.requester_id)
             .await
             .map_err(|_| Status::internal("failed to get followers"))?;
 

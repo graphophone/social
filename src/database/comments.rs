@@ -3,7 +3,12 @@ use sqlx::types::time;
 use crate::database::SocialDb;
 
 pub trait CommentsDb {
-    async fn add_comment(&self, user_id: i64, music_id: i64, content: String) -> sqlx::Result<()>;
+    async fn add_comment(
+        &self,
+        user_id: i64,
+        music_id: i64,
+        content: String,
+    ) -> sqlx::Result<CommentEntry>;
     async fn remove_comment(&self, comment_id: i64) -> sqlx::Result<()>;
     async fn update_comment(&self, comment_id: i64, new_content: String) -> sqlx::Result<()>;
     async fn check_owner(&self, comment_id: i64, user_id: i64) -> sqlx::Result<bool>;
@@ -17,19 +22,32 @@ pub trait CommentsDb {
 }
 
 impl CommentsDb for SocialDb {
-    async fn add_comment(&self, user_id: i64, music_id: i64, content: String) -> sqlx::Result<()> {
-        sqlx::query!(
+    async fn add_comment(
+        &self,
+        user_id: i64,
+        music_id: i64,
+        content: String,
+    ) -> sqlx::Result<CommentEntry> {
+        let res = sqlx::query!(
             r"
             INSERT INTO comments (commenter_id, music_id, content)
-            VALUES ($1, $2, $3);",
+            VALUES ($1, $2, $3)
+            RETURNING id, commenter_id, content, created_at;",
             user_id,
             music_id,
             content,
         )
-        .execute(&self.pool)
+        .fetch_one(&self.pool)
         .await?;
 
-        Ok(())
+        Ok(CommentEntry {
+            comment_id: res.id,
+            commenter_id: res.commenter_id,
+            content: res.content,
+            created_at: res.created_at,
+            likes_count: 0,
+            is_liked: false,
+        })
     }
 
     async fn remove_comment(&self, comment_id: i64) -> sqlx::Result<()> {

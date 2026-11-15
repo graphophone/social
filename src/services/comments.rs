@@ -5,7 +5,7 @@ use tonic::{Request, Response, Status, async_trait};
 use crate::{
     database::{SocialDb, comments::CommentsDb},
     services::comments::comments::{
-        AddCommentReq, CheckOwnerReq, CheckOwnerRes, CommentsPage, Empty, GetCommentsReq,
+        AddCommentReq, CheckOwnerReq, CommentEntry, CommentsPage, Empty, GetCommentsReq,
         RemoveCommentReq, ToggleLikeReq, UpdateCommentReq, comments_server::Comments,
     },
 };
@@ -26,15 +26,26 @@ impl CommentsService {
 
 #[async_trait]
 impl Comments for CommentsService {
-    async fn add_comment(&self, req: Request<AddCommentReq>) -> Result<Response<Empty>, Status> {
+    async fn add_comment(
+        &self,
+        req: Request<AddCommentReq>,
+    ) -> Result<Response<CommentEntry>, Status> {
         let req = req.into_inner();
 
-        self.social_db
+        let res = self
+            .social_db
             .add_comment(req.user_id, req.music_id, req.content)
             .await
             .map_err(|_| Status::internal("failed to add comment"))?;
 
-        Ok(Response::new(Empty {}))
+        Ok(Response::new(CommentEntry {
+            comment_id: res.comment_id,
+            commenter_id: res.commenter_id,
+            content: res.content,
+            created_at: res.created_at.unix_timestamp(),
+            likes_count: res.likes_count,
+            is_liked: res.is_liked,
+        }))
     }
 
     async fn remove_comment(
@@ -65,10 +76,7 @@ impl Comments for CommentsService {
         Ok(Response::new(Empty {}))
     }
 
-    async fn check_owner(
-        &self,
-        req: Request<CheckOwnerReq>,
-    ) -> Result<Response<CheckOwnerRes>, Status> {
+    async fn check_owner(&self, req: Request<CheckOwnerReq>) -> Result<Response<Empty>, Status> {
         let req = req.into_inner();
 
         let res = self
@@ -77,7 +85,11 @@ impl Comments for CommentsService {
             .await
             .map_err(|_| Status::internal("failed to check owner"))?;
 
-        Ok(Response::new(CheckOwnerRes { is_owner: res }))
+        if res == false {
+            return Err(Status::unauthenticated("not owner"));
+        }
+
+        Ok(Response::new(Empty {}))
     }
 
     async fn toggle_like(&self, req: Request<ToggleLikeReq>) -> Result<Response<Empty>, Status> {

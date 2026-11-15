@@ -23,7 +23,4 @@ CREATE TABLE IF NOT EXISTS comment_likes (
 );
 
 CREATE INDEX idx_comments_music_id
-ON comments (music_id);
-
-CREATE INDEX idx_comments_music_id
-ON comments (music_id);
+ON comments (music_id, created_at);
