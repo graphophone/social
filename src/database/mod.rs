@@ -2,6 +2,7 @@ use anyhow::Result;
 use sqlx::postgres::PgPoolOptions;
 use std::time::Duration;
 
+pub mod comments;
 pub mod follows;
 
 pub struct SocialDb {
