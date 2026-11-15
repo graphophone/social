@@ -31,15 +31,15 @@ impl follows::follows_server::Follows for FollowsService {
     ) -> Result<Response<FollowsCount>, Status> {
         let req = req.into_inner();
 
-        let (following_count, followed_count) = self
+        let (followings_count, followers_count) = self
             .social_db
             .get_user_follows_count(req.user_id)
             .await
             .map_err(|_| Status::internal("failed to get user follows count"))?;
 
         Ok(Response::new(FollowsCount {
-            following_count,
-            followed_count,
+            followings_count,
+            followers_count,
         }))
     }
 

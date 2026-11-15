@@ -15,8 +15,8 @@ message UserId {
 }
 
 message FollowsCount {
-    int64 following_count = 1;
-    int64 followed_count = 2;
+    int64 followings_count = 1;
+    int64 followers_count = 2;
 }
 
 message ToggleFollowReq {

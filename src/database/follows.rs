@@ -13,8 +13,8 @@ impl FollowsDb for SocialDb {
         let res = sqlx::query!(
             r"
             SELECT
-                (SELECT COUNT(*) FROM follows WHERE follower_id = $1) following_count,
-                (SELECT COUNT(*) FROM follows WHERE followee_id = $1) followed_count
+                (SELECT COUNT(*) FROM follows WHERE follower_id = $1) followings_count,
+                (SELECT COUNT(*) FROM follows WHERE followee_id = $1) followers_count
             ",
             user_id
         )
@@ -22,8 +22,8 @@ impl FollowsDb for SocialDb {
         .await?;
 
         Ok((
-            res.following_count.unwrap_or(0),
-            res.followed_count.unwrap_or(0),
+            res.followings_count.unwrap_or(0),
+            res.followers_count.unwrap_or(0),
         ))
     }
 
