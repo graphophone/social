@@ -5,7 +5,7 @@ use tonic::{Request, Response, Status, async_trait};
 use crate::{
     database::{SocialDb, follows::FollowsDb},
     services::follows::follows::{
-        Empty, FollowsCount, FollowsPage, GetFollowsReq, ToggleFollowReq, UserId,
+        Empty, FollowsCount, FollowsPage, GetFollowsCountReq, GetFollowsReq, ToggleFollowReq,
     },
 };
 
@@ -25,21 +25,22 @@ impl FollowsService {
 
 #[async_trait]
 impl follows::follows_server::Follows for FollowsService {
-    async fn get_user_follows_count(
+    async fn get_follows_count(
         &self,
-        req: Request<UserId>,
+        req: Request<GetFollowsCountReq>,
     ) -> Result<Response<FollowsCount>, Status> {
         let req = req.into_inner();
 
-        let (followings_count, followers_count) = self
+        let res = self
             .social_db
-            .get_user_follows_count(req.user_id)
+            .get_follows_count(req.user_id, req.follower_id)
             .await
             .map_err(|_| Status::internal("failed to get user follows count"))?;
 
         Ok(Response::new(FollowsCount {
-            followings_count,
-            followers_count,
+            followings_count: res.followings_count,
+            followers_count: res.followers_count,
+            is_followed: res.is_followed,
         }))
     }
 
@@ -57,7 +58,7 @@ impl follows::follows_server::Follows for FollowsService {
         Ok(Response::new(Empty {}))
     }
 
-    async fn get_user_followers(
+    async fn get_followers(
         &self,
         req: Request<GetFollowsReq>,
     ) -> Result<Response<FollowsPage>, Status> {
@@ -75,7 +76,7 @@ impl follows::follows_server::Follows for FollowsService {
         }))
     }
 
-    async fn get_user_followings(
+    async fn get_followings(
         &self,
         req: Request<GetFollowsReq>,
     ) -> Result<Response<FollowsPage>, Status> {
